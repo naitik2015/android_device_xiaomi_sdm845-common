@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2020 The LineageOS Project
+# Copyright (C) 2018-2019 The LineageOS Project
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -8,21 +8,19 @@
 $(call inherit-product, $(SRC_TARGET_DIR)/product/core_64_bit.mk)
 $(call inherit-product, $(SRC_TARGET_DIR)/product/full_base_telephony.mk)
 
-# Get non-open-source specific aspects
-$(call inherit-product-if-exists, vendor/xiaomi/sdm845-common/sdm845-common-vendor.mk)
-
 # Setup dalvik vm configs
 $(call inherit-product, frameworks/native/build/phone-xhdpi-6144-dalvik-heap.mk)
+
+# Get non-open-source specific aspects
+$(call inherit-product-if-exists, vendor/xiaomi/sdm845-common/sdm845-common-vendor.mk)
 
 # Overlays
 DEVICE_PACKAGE_OVERLAYS += \
     $(LOCAL_PATH)/overlay \
-    $(LOCAL_PATH)/overlay-lineage \
     $(LOCAL_PATH)/overlay-system
 
 PRODUCT_ENFORCE_RRO_TARGETS := *
 PRODUCT_ENFORCE_RRO_EXCLUDED_OVERLAYS += \
-    $(LOCAL_PATH)/overlay-lineage/lineage-sdk \
     $(LOCAL_PATH)/overlay-system
 
 # Permissions
@@ -51,9 +49,9 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.touchscreen.multitouch.jazzhand.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.touchscreen.multitouch.jazzhand.xml \
     frameworks/native/data/etc/android.hardware.usb.accessory.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.accessory.xml \
     frameworks/native/data/etc/android.hardware.usb.host.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.usb.host.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.compute-0.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.level-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level-0.xml \
-    frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version-1_1.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.compute-0.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.compute.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.level-1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.level.xml \
+    frameworks/native/data/etc/android.hardware.vulkan.version-1_1.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.vulkan.version.xml \
     frameworks/native/data/etc/android.hardware.wifi.direct.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.direct.xml \
     frameworks/native/data/etc/android.hardware.wifi.passpoint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.passpoint.xml \
     frameworks/native/data/etc/android.hardware.wifi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.hardware.wifi.xml \
@@ -61,6 +59,9 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.software.midi.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.midi.xml \
     frameworks/native/data/etc/android.software.sip.voip.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/android.software.sip.voip.xml \
     frameworks/native/data/etc/handheld_core_hardware.xml:$(TARGET_COPY_OUT_VENDOR)/etc/permissions/handheld_core_hardware.xml
+
+# Haters gonna hate...
+PRODUCT_CHARACTERISTICS := nosdcard
 
 # Properties
 PRODUCT_COMPATIBLE_PROPERTY_OVERRIDE := true
@@ -71,8 +72,10 @@ PRODUCT_PACKAGES += \
 
 # Audio
 PRODUCT_PACKAGES += \
+    android.hardware.audio@2.0-impl \
     android.hardware.audio@2.0-service \
     android.hardware.audio@5.0-impl \
+    android.hardware.audio.effect@2.0-impl \
     android.hardware.audio.effect@5.0-impl \
     android.hardware.soundtrigger@2.2-impl \
     audio.a2dp.default \
@@ -115,8 +118,18 @@ PRODUCT_PACKAGES += \
     android.hardware.camera.provider@2.4-impl \
     android.hardware.camera.provider@2.4-service \
     libdng_sdk.vendor \
-    Snap \
     vendor.qti.hardware.camera.device@1.0.vendor
+
+# Codec2
+PRODUCT_PACKAGES += \
+    libcodec2_vndk.vendor \
+    libcodec2_hidl@1.0.vendor
+
+
+# Codec2 modules
+PRODUCT_PACKAGES += \
+    com.android.media.swcodec \
+    libsfplugin_ccodec
 
 # Common init scripts
 PRODUCT_PACKAGES += \
@@ -149,10 +162,15 @@ PRODUCT_PACKAGES += \
     android.hardware.memtrack@1.0-service \
     gralloc.sdm845 \
     hwcomposer.sdm845 \
+    libdisplayconfig \
+    libdisplayconfig.vendor \
+    libqdMetaData \
+    libqdMetaData.system \
     libtinyxml \
     libvulkan \
+    vendor.display.config@1.9 \
+    vendor.display.config@1.9.vendor \
     memtrack.sdm845 \
-    vendor.display.config@1.7 \
     vendor.qti.hardware.display.allocator@1.0-service
 
 # DRM
@@ -169,7 +187,9 @@ PRODUCT_PACKAGES += \
 # HIDL
 PRODUCT_PACKAGES += \
     android.hidl.base@1.0 \
-    android.hidl.base@1.0.vendor
+    android.hidl.base@1.0_system \
+    android.hidl.manager@1.0 \
+    android.hidl.manager@1.0_system
 
 # HotwordEnrollement app permissions
 PRODUCT_COPY_FILES += \
@@ -182,9 +202,26 @@ PRODUCT_PACKAGES += \
 PRODUCT_BOOT_JARS += \
     org.ifaa.android.manager
 
+# IMS
+PRODUCT_PACKAGES += \
+    ims-ext-common \
+    ims_ext_common.xml
+
+PRODUCT_PACKAGES += \
+    qti-telephony-hidl-wrapper \
+    qti_telephony_hidl_wrapper.xml
+
+PRODUCT_PACKAGES += \
+    qti-telephony-utils \
+    qti_telephony_utils.xml
+
 # Input
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/keylayout/sdm845-tavil-snd-card_Button_Jack.kl:system/usr/keylayout/sdm845-tavil-snd-card_Button_Jack.kl
+    $(LOCAL_PATH)/keylayout/sdm845-tavil-snd-card_Button_Jack.kl:$(TARGET_COPY_OUT_SYSTEM)/usr/keylayout/sdm845-tavil-snd-card_Button_Jack.kl
+
+# IRQ
+PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/configs/msm_irqbalance.conf:$(TARGET_COPY_OUT_VENDOR)/etc/msm_irqbalance.conf
 
 # IPA
 PRODUCT_PACKAGES += \
@@ -194,10 +231,6 @@ PRODUCT_PACKAGES += \
 # Lights
 PRODUCT_PACKAGES += \
     android.hardware.light@2.0-service.xiaomi_sdm845
-
-# LiveDisplay
-PRODUCT_PACKAGES += \
-    vendor.lineage.livedisplay@2.0-service-sdm
 
 # Media
 PRODUCT_PACKAGES += \
@@ -214,7 +247,9 @@ PRODUCT_PACKAGES += \
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/configs/media_codecs.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs.xml \
+    $(LOCAL_PATH)/configs/media_codecs_vendor.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_vendor.xml \
     $(LOCAL_PATH)/configs/media_codecs_performance.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_performance.xml \
+    $(LOCAL_PATH)/configs/media_codecs_vendor_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_vendor_audio.xml \
     $(LOCAL_PATH)/configs/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles.xml \
     $(LOCAL_PATH)/configs/media_profiles.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_V1_0.xml \
     $(LOCAL_PATH)/configs/media_profiles_vendor.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_profiles_vendor.xml \
@@ -222,6 +257,9 @@ PRODUCT_COPY_FILES += \
 
 PRODUCT_COPY_FILES += \
     frameworks/av/media/libstagefright/data/media_codecs_google_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_audio.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_c2.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_c2_audio.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2_audio.xml \
+    frameworks/av/media/libstagefright/data/media_codecs_google_c2_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_c2_video.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_telephony.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_telephony.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video.xml \
     frameworks/av/media/libstagefright/data/media_codecs_google_video_le.xml:$(TARGET_COPY_OUT_VENDOR)/etc/media_codecs_google_video_le.xml
@@ -234,19 +272,24 @@ PRODUCT_COPY_FILES += \
 PRODUCT_PACKAGES += \
     netutils-wrapper-1.0
 
+# Perfd (dummy)
+PRODUCT_PACKAGES += \
+    libqti-perfd-client
+
 # Power
 PRODUCT_PACKAGES += \
-    android.hardware.power@1.2-service-qti
+    android.hardware.power@1.3-service.xiaomi-libperfmgr \
+    android.hardware.power.stats@1.0-service.xiaomi
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/power/configs/powerhint.xml:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.xml
+    $(LOCAL_PATH)/configs/powerhint.json:$(TARGET_COPY_OUT_VENDOR)/etc/powerhint.json
 
 # QTI
 PRODUCT_PACKAGES += \
     libqti_vndfwk_detect.vendor
 
 PRODUCT_COPY_FILES += \
-    $(LOCAL_PATH)/configs/qti_whitelist.xml:system/etc/sysconfig/qti_whitelist.xml \
+    $(LOCAL_PATH)/configs/qti_whitelist.xml:$(TARGET_COPY_OUT_SYSTEM)/etc/sysconfig/qti_whitelist.xml \
     $(LOCAL_PATH)/permissions/privapp-permissions-qti.xml:$(TARGET_COPY_OUT_PRODUCT)/etc/permissions/privapp-permissions-qti.xml
 
 # Radio
@@ -260,16 +303,13 @@ PRODUCT_PACKAGES += \
     PresencePolling \
     RcsService
 
-# Recovery
-PRODUCT_PACKAGES += \
-    librecovery_updater_xiaomi
-
 # RenderScript
 PRODUCT_PACKAGES += \
     android.hardware.renderscript@1.0-impl
 
 # Seccomp policy
 PRODUCT_COPY_FILES += \
+    $(LOCAL_PATH)/seccomp/codec2.vendor.ext.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/codec2.vendor.ext.policy \
     $(LOCAL_PATH)/seccomp/mediacodec-seccomp.policy:$(TARGET_COPY_OUT_VENDOR)/etc/seccomp_policy/mediacodec.policy
 
 # Sensors
@@ -281,16 +321,11 @@ PRODUCT_PACKAGES += \
 # Soong namespaces
 PRODUCT_SOONG_NAMESPACES += \
     $(LOCAL_PATH) \
+    hardware/google/pixel \
     hardware/xiaomi
 
 # Telephony
 PRODUCT_PACKAGES += \
-    ims-ext-common \
-    ims_ext_common.xml \
-    qti-telephony-hidl-wrapper \
-    qti_telephony_hidl_wrapper.xml \
-    qti-telephony-utils \
-    qti_telephony_utils.xml \
     telephony-ext
 
 PRODUCT_BOOT_JARS += \
@@ -306,13 +341,13 @@ PRODUCT_PACKAGES += \
     android.hardware.thermal@1.0-service \
     thermal.sdm845
 
-# Trust HAL
+# Tracing
 PRODUCT_PACKAGES += \
-    vendor.lineage.trust@1.0-service
+    android.hardware.atrace@1.0-service.pixel
 
 # USB
 PRODUCT_PACKAGES += \
-    android.hardware.usb@1.0-service
+    android.hardware.usb@1.0-service.basic
 
 # Vibrator
 PRODUCT_PACKAGES += \
@@ -329,10 +364,17 @@ PRODUCT_PACKAGES += \
 PRODUCT_PACKAGES += \
     android.hardware.wifi@1.0-service \
     hostapd \
+    libqsap_sdk \
+    libQWiFiSoftApCfg \
     libwifi-hal-qcom \
     libwpa_client \
+    wificond \
+    wifilogd \
+    wpa_cli \
     wpa_supplicant \
-    wpa_supplicant.conf
+    wpa_supplicant.conf \
+    vendor.qti.hardware.wifi.hostapd@1.1.vendor \
+    vendor.qti.hardware.wifi.supplicant@2.1.vendor
 
 PRODUCT_COPY_FILES += \
     $(LOCAL_PATH)/wifi/hostapd.accept:$(TARGET_COPY_OUT_VENDOR)/etc/hostapd/hostapd.accept \
@@ -344,11 +386,10 @@ PRODUCT_COPY_FILES += \
 
 # WiFi Display
 PRODUCT_PACKAGES += \
-    libdisplayconfig \
-    libdisplayconfig.vendor \
-    libnl \
-    libqdMetaData \
-    libqdMetaData.system
+    libnl
 
 PRODUCT_BOOT_JARS += \
     WfdCommon
+
+# Set boot SPL
+BOOT_SECURITY_PATCH = $(PLATFORM_SECURITY_PATCH)
